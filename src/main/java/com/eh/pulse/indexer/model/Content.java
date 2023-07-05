@@ -41,4 +41,19 @@ public class Content {
 
   @Field(type = Dense_Vector, name = "vec-comments")
   private List<Float> vecComments;
+
+  @Field(type = Text, name = "user-id")
+  private String userId;
+
+  @Field(type = Text, name = "user-name")
+  private String userName;
+
+  @Field(type = Text, name = "user-firstname")
+  private String userFirstname;
+
+  @Field(type = Text, name = "user-lastname")
+  private String userLastname;
+
+  @Field(type = Text, name = "user-email")
+  private String userEmail;
 }

@@ -2,6 +2,7 @@ package com.eh.pulse.indexer.service;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -64,18 +65,41 @@ public class IndexerService {
       content.setDescription(article.getDescription());
       content.setKeywords(article.getTags());
       
-      List<List<Float>> embeddings = Arrays.asList(article.getTags().split(",")).parallelStream().map(tag -> {
-        try {
-          Embedding embedding = this.getEmbedding(tag).get();
-          return embedding.getEmbedding();
-        } catch (Exception e) {
-          logger.error(e.getMessage());
-          return null;
-        }
+      List<CompletableFuture<List<Float>>> futures = Arrays.asList(article.getTags().split(",")).stream().map(tag -> {
+        if(tag.trim().isEmpty()) return CompletableFuture.completedFuture((List<Float>)null);
+        return CompletableFuture.supplyAsync(() -> {
+          try {
+            Embedding embedding = this.getEmbedding(tag).get();
+            return embedding.getEmbedding();
+          } catch (Exception e) {
+            logger.error(e.getMessage());
+            return null;
+          }
+        });
       }).collect(Collectors.toList());
 
-      List<Float> meanEmbedding = this.calculateMeanEmbedding(embeddings);
-      content.setVecKeywords(meanEmbedding);
+      List<List<Float>> embeddings = futures.stream().map(CompletableFuture::join)
+        .filter(Objects::nonNull)
+        .map(embedding -> (List<Float>)embedding)
+        .collect(Collectors.toList());
+
+      // List<List<Float>> embeddings = Arrays.asList(article.getTags().split(",")).parallelStream().map(tag -> {
+      //   if(tag.trim().isEmpty()) return null;
+      //   try {
+      //     Embedding embedding = this.getEmbedding(tag).get();
+      //     return embedding.getEmbedding();
+      //   } catch (Exception e) {
+      //     logger.error(e.getMessage());
+      //     return null;
+      //   }
+      // })
+      // .filter(Objects::nonNull)
+      // .collect(Collectors.toList());
+
+      if(!embeddings.isEmpty()) {
+        List<Float> meanEmbedding = this.calculateMeanEmbedding(embeddings);
+        content.setVecKeywords(meanEmbedding);
+      }
 
       CompletableFuture<Embedding> titleEmbedding = this.getEmbedding(article.getTitle());
       CompletableFuture<Embedding> descriptionEmbedding = this.getEmbedding(article.getDescription());
@@ -104,6 +128,10 @@ public class IndexerService {
     
     logger.info(result.get(0).toString());
     logger.info("==> Count -> {}", this.contentRepository.count());
+  }
+
+  public void indexPeople() {
+
   }
 
   @Async

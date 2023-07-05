@@ -30,7 +30,7 @@ public class JsonFileReader {
       JsonParser parser = factory.createParser(inputStream);
 
       if (parser.nextToken() == JsonToken.START_ARRAY) {
-        while (parser.nextToken() == JsonToken.START_OBJECT && articles.size() <= 50) {
+        while (parser.nextToken() == JsonToken.START_OBJECT && articles.size() <= 100) {
           Article article = objectReader.readValue(parser);
           articles.add(article);
         }

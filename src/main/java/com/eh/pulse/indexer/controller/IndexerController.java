@@ -32,7 +32,7 @@ public class IndexerController {
     return "Hello";
   }
 
-  @GetMapping("/index")
+  @GetMapping("/index/articles")
   public String index() {
     indexerService.indexArticles();
     return "Index completed";
